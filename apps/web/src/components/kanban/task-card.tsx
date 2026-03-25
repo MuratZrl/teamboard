@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar } from 'lucide-react';
+import { Calendar, MessageSquare, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/app/(dashboard)/boards/[id]/page';
 
@@ -26,6 +26,21 @@ export function TaskCard({ task, isDragging, onClick }: TaskCardProps) {
         isDragging && 'opacity-75 shadow-lg rotate-2 scale-105',
       )}
     >
+      {/* Labels */}
+      {task.labels?.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {task.labels.map((label) => (
+            <span
+              key={label.id}
+              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium text-white"
+              style={{ backgroundColor: label.color }}
+            >
+              {label.name}
+            </span>
+          ))}
+        </div>
+      )}
+
       <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">{task.title}</p>
 
       <div className="flex items-center justify-between">
@@ -45,6 +60,18 @@ export function TaskCard({ task, isDragging, onClick }: TaskCardProps) {
                 month: 'short',
                 day: 'numeric',
               })}
+            </span>
+          )}
+          {task._count?.comments > 0 && (
+            <span className="flex items-center gap-0.5 text-xs text-slate-400 dark:text-slate-500">
+              <MessageSquare className="w-3 h-3" />
+              {task._count.comments}
+            </span>
+          )}
+          {task._count?.attachments > 0 && (
+            <span className="flex items-center gap-0.5 text-xs text-slate-400 dark:text-slate-500">
+              <Paperclip className="w-3 h-3" />
+              {task._count.attachments}
             </span>
           )}
         </div>

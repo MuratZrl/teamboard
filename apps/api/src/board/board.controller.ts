@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -10,7 +11,6 @@ import {
 import { BoardService } from './board.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WorkspaceGuard } from '../common/guards/workspace.guard';
-import { RoleGuard, Roles } from '../common/guards/role.guard';
 
 @Controller()
 export class BoardController {
@@ -38,5 +38,31 @@ export class BoardController {
   @UseGuards(JwtAuthGuard)
   delete(@Param('id') id: string) {
     return this.boardService.delete(id);
+  }
+
+  // Column endpoints
+
+  @Post('boards/:id/columns')
+  @UseGuards(JwtAuthGuard)
+  addColumn(@Param('id') boardId: string, @Body('name') name: string) {
+    return this.boardService.addColumn(boardId, name);
+  }
+
+  @Patch('columns/:id/rename')
+  @UseGuards(JwtAuthGuard)
+  renameColumn(@Param('id') columnId: string, @Body('name') name: string) {
+    return this.boardService.renameColumn(columnId, name);
+  }
+
+  @Delete('columns/:id')
+  @UseGuards(JwtAuthGuard)
+  deleteColumn(@Param('id') id: string) {
+    return this.boardService.deleteColumn(id);
+  }
+
+  @Patch('boards/:id/columns/reorder')
+  @UseGuards(JwtAuthGuard)
+  reorderColumns(@Param('id') boardId: string, @Body('columnIds') columnIds: string[]) {
+    return this.boardService.reorderColumns(boardId, columnIds);
   }
 }

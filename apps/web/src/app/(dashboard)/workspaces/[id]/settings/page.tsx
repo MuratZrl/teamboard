@@ -12,6 +12,8 @@ import {
   Shield,
   User,
   CreditCard,
+  Tag,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SettingsSkeleton } from '@/components/ui/skeleton';
@@ -37,17 +39,27 @@ interface Workspace {
   subscription: { status: string } | null;
 }
 
+interface Label {
+  id: string;
+  name: string;
+  color: string;
+}
+
 const roleIcons = {
   OWNER: Crown,
   ADMIN: Shield,
   MEMBER: User,
 };
 
+const presetColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+
 export default function WorkspaceSettingsPage() {
   const { id } = useParams<{ id: string }>();
   const { fetcher } = useApi();
   const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState('');
+  const [labelName, setLabelName] = useState('');
+  const [labelColor, setLabelColor] = useState(presetColors[0]);
 
   const { data: workspace, isLoading } = useQuery<Workspace>({
     queryKey: ['workspace', id],
@@ -57,6 +69,11 @@ export default function WorkspaceSettingsPage() {
   const { data: invitations } = useQuery<Invitation[]>({
     queryKey: ['invitations', id],
     queryFn: () => fetcher(`workspaces/${id}/invitations`),
+  });
+
+  const { data: labels } = useQuery<Label[]>({
+    queryKey: ['labels', id],
+    queryFn: () => fetcher(`workspaces/${id}/labels`),
   });
 
   const inviteMutation = useMutation({
@@ -69,6 +86,31 @@ export default function WorkspaceSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['invitations', id] });
       setInviteEmail('');
       toast.success('Invitation sent');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const createLabel = useMutation({
+    mutationFn: ({ name, color }: { name: string; color: string }) =>
+      fetcher(`workspaces/${id}/labels`, {
+        method: 'POST',
+        body: JSON.stringify({ name, color }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labels', id] });
+      setLabelName('');
+      setLabelColor(presetColors[0]);
+      toast.success('Label created');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteLabel = useMutation({
+    mutationFn: (labelId: string) =>
+      fetcher(`labels/${labelId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labels', id] });
+      toast.success('Label deleted');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -183,6 +225,85 @@ export default function WorkspaceSettingsPage() {
             );
           })}
         </div>
+      </section>
+
+      {/* Labels */}
+      <section className="bg-white border border-slate-200 rounded-xl p-6 mb-6 dark:bg-white/[0.03] dark:border-white/10">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 dark:text-white">
+          <Tag className="w-5 h-5 text-blue-600" />
+          Labels
+        </h2>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!labelName.trim()) return;
+            createLabel.mutate({ name: labelName.trim(), color: labelColor });
+          }}
+          className="flex flex-col gap-3 mb-4"
+        >
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={labelName}
+              onChange={(e) => setLabelName(e.target.value)}
+              placeholder="Label name"
+              required
+              className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-slate-500"
+            />
+            <button
+              type="submit"
+              disabled={createLabel.isPending}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 text-sm"
+            >
+              Add Label
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Color:</span>
+            {presetColors.map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setLabelColor(color)}
+                className={`w-6 h-6 rounded-full transition-all ${
+                  labelColor === color
+                    ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-slate-900'
+                    : 'hover:scale-110'
+                }`}
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+        </form>
+        {labels && labels.length > 0 && (
+          <div className="space-y-2 border-t border-slate-100 dark:border-white/5 pt-4">
+            {labels.map((label) => (
+              <div
+                key={label.id}
+                className="flex items-center justify-between py-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: label.color }}
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                    {label.name}
+                  </span>
+                </div>
+                <button
+                  onClick={() => deleteLabel.mutate(label.id)}
+                  className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {labels && labels.length === 0 && (
+          <p className="text-sm text-slate-400 dark:text-slate-500">No labels yet. Create one above.</p>
+        )}
       </section>
 
       {/* Billing */}

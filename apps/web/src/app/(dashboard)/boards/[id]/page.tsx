@@ -10,6 +10,12 @@ import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { TaskModal } from '@/components/kanban/task-modal';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 
+export interface Label {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -19,6 +25,8 @@ export interface Task {
   dueDate: string | null;
   columnId: string;
   assignee: { id: string; name: string; image: string | null } | null;
+  labels: Label[];
+  _count: { comments: number; attachments: number };
 }
 
 export interface Column {
@@ -95,6 +103,42 @@ export default function BoardPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const addColumn = useMutation({
+    mutationFn: (name: string) =>
+      fetcher(`boards/${id}/columns`, {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board', id] });
+      toast.success('Column added');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const renameColumn = useMutation({
+    mutationFn: ({ columnId, name }: { columnId: string; name: string }) =>
+      fetcher(`columns/${columnId}/rename`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board', id] });
+      toast.success('Column renamed');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteColumn = useMutation({
+    mutationFn: (columnId: string) =>
+      fetcher(`columns/${columnId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board', id] });
+      toast.success('Column deleted');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   // Keyboard shortcuts
   const shortcuts = useMemo(
     () => ({
@@ -147,12 +191,18 @@ export default function BoardPage() {
             createTask.mutate({ columnId, title })
           }
           onSelectTask={setSelectedTask}
+          onAddColumn={(name) => addColumn.mutate(name)}
+          onRenameColumn={(columnId, name) =>
+            renameColumn.mutate({ columnId, name })
+          }
+          onDeleteColumn={(columnId) => deleteColumn.mutate(columnId)}
         />
       </div>
 
       {selectedTask && (
         <TaskModal
           task={selectedTask}
+          workspaceId={board.workspaceId}
           onClose={() => setSelectedTask(null)}
           onUpdate={(data) =>
             updateTask.mutate({ taskId: selectedTask.id, data })

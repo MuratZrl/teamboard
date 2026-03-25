@@ -8,6 +8,7 @@ interface CreateTaskData {
   priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   assigneeId?: string;
   dueDate?: string;
+  labelIds?: string[];
 }
 
 @Injectable()
@@ -51,9 +52,13 @@ export class TaskService {
         ...(data.dueDate !== undefined && {
           dueDate: data.dueDate ? new Date(data.dueDate) : null,
         }),
+        ...(data.labelIds !== undefined && {
+          labels: { set: data.labelIds.map((id) => ({ id })) },
+        }),
       },
       include: {
         assignee: { select: { id: true, name: true, image: true } },
+        labels: { select: { id: true, name: true, color: true } },
       },
     });
   }

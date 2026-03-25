@@ -9,6 +9,9 @@ import { InvitationModule } from './invitation/invitation.module';
 import { BoardModule } from './board/board.module';
 import { TaskModule } from './task/task.module';
 import { SubscriptionModule } from './subscription/subscription.module';
+import { CommentModule } from './comment/comment.module';
+import { LabelModule } from './label/label.module';
+import { AttachmentModule } from './attachment/attachment.module';
 
 @Module({
   imports: [
@@ -29,6 +32,9 @@ import { SubscriptionModule } from './subscription/subscription.module';
     BoardModule,
     TaskModule,
     SubscriptionModule,
+    CommentModule,
+    LabelModule,
+    AttachmentModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

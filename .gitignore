@@ -23,6 +23,9 @@ apps/api/prisma/migrations/**/migration_lock.toml
 # Docker
 docker-data/
 
+# Uploads
+uploads/
+
 # Playwright
 playwright-report/
 test-results/
