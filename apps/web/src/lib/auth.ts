@@ -4,13 +4,19 @@ import Google from 'next-auth/providers/google';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [
+const providers: any[] = [];
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_ID !== 'placeholder') {
+  providers.push(
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    Credentials({
+  );
+}
+
+providers.push(
+  Credentials({
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -48,7 +54,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
-  ],
+);
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers,
   callbacks: {
     async jwt({ token, user, account }) {
       if (user && 'accessToken' in user) {
@@ -79,4 +88,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: '/login',
   },
   session: { strategy: 'jwt' },
+  trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
 });

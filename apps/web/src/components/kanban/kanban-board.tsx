@@ -8,7 +8,10 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
+  CollisionDetection,
+  DroppableContainer,
 } from '@dnd-kit/core';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -39,6 +42,22 @@ export function KanbanBoard({
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
 
+  const columnIds = new Set(columns.map((c) => c.id));
+
+  // Custom collision: prefer tasks (pointerWithin), fallback to columns (rectIntersection)
+  const collisionDetection: CollisionDetection = (args) => {
+    // First check pointerWithin for precise detection
+    const pointerCollisions = pointerWithin(args);
+
+    // If we found collisions, prefer column droppables when no task is hit
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions;
+    }
+
+    // Fallback to rect intersection for broader detection
+    return rectIntersection(args);
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
@@ -61,18 +80,23 @@ export function KanbanBoard({
     let targetColumnId: string;
     let targetOrder: number;
 
+    const overId = over.id as string;
+
     // Check if dropped over a column
-    const overColumn = columns.find((col) => col.id === over.id);
-    if (overColumn) {
-      targetColumnId = overColumn.id;
-      targetOrder = overColumn.tasks.length;
+    if (columnIds.has(overId)) {
+      targetColumnId = overId;
+      const col = columns.find((c) => c.id === overId);
+      targetOrder = col?.tasks.length ?? 0;
     } else {
       // Dropped over a task — find which column it belongs to
-      const overTask = findTask(over.id as string);
-      if (!overTask) return;
+      const overTask = findTask(overId);
+      if (!overTask) {
+        // Maybe it's a column data attribute - check all columns
+        return;
+      }
       targetColumnId = overTask.columnId;
       const col = columns.find((c) => c.id === targetColumnId);
-      targetOrder = col?.tasks.findIndex((t) => t.id === over.id) ?? 0;
+      targetOrder = col?.tasks.findIndex((t) => t.id === overId) ?? 0;
     }
 
     const sourceTask = findTask(taskId);
@@ -100,7 +124,7 @@ export function KanbanBoard({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >

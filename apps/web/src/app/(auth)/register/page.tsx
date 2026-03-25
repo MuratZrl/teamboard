@@ -36,7 +36,9 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError(result.error === 'CredentialsSignin' ? 'Registration failed. Email may already be in use.' : result.error);
+      setError('Registration failed. Email may already be in use.');
+    } else if (result?.code) {
+      setError('Registration failed. Please try again.');
     } else {
       router.push('/workspaces');
     }
