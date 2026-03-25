@@ -45,6 +45,7 @@ export function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
+      data-column-id={column.id}
       className={`w-72 flex-shrink-0 flex flex-col bg-slate-100 dark:bg-white/[0.03] rounded-xl ${
         isOver ? 'ring-2 ring-blue-400' : ''
       }`}

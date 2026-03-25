@@ -4,7 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/hooks/use-api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Plus, Users, LayoutGrid, Crown, Loader2 } from 'lucide-react';
+import { Plus, Users, LayoutGrid, Crown } from 'lucide-react';
+import { toast } from 'sonner';
+import { WorkspaceListSkeleton } from '@/components/ui/skeleton';
 
 interface Workspace {
   id: string;
@@ -37,14 +39,22 @@ export default function WorkspacesPage() {
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       setShowCreate(false);
       setNewName('');
+      toast.success('Workspace created');
       router.push(`/workspaces/${data.id}`);
     },
+    onError: (err) => toast.error(err.message),
   });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="p-8 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <div className="h-8 w-40 bg-slate-200 dark:bg-white/10 rounded-lg animate-pulse" />
+            <div className="h-4 w-56 bg-slate-200 dark:bg-white/10 rounded mt-2 animate-pulse" />
+          </div>
+        </div>
+        <WorkspaceListSkeleton />
       </div>
     );
   }

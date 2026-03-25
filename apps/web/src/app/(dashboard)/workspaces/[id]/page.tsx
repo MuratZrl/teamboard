@@ -9,8 +9,9 @@ import {
   Plus,
   Settings,
   LayoutGrid,
-  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { CardSkeleton } from '@/components/ui/skeleton';
 
 interface Board {
   id: string;
@@ -54,8 +55,10 @@ export default function WorkspaceDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['boards', id] });
       setShowCreate(false);
       setBoardName('');
+      toast.success('Board created');
       router.push(`/boards/${data.id}`);
     },
+    onError: (err) => toast.error(err.message),
   });
 
   return (
@@ -123,8 +126,8 @@ export default function WorkspaceDetailPage() {
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => <CardSkeleton key={i} />)}
         </div>
       ) : boards && boards.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

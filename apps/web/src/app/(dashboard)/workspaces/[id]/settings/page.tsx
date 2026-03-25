@@ -11,9 +11,10 @@ import {
   Crown,
   Shield,
   User,
-  Loader2,
   CreditCard,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { SettingsSkeleton } from '@/components/ui/skeleton';
 
 interface Member {
   id: string;
@@ -67,13 +68,16 @@ export default function WorkspaceSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invitations', id] });
       setInviteEmail('');
+      toast.success('Invitation sent');
     },
+    onError: (err) => toast.error(err.message),
   });
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="p-8 max-w-3xl mx-auto">
+        <div className="h-8 w-60 bg-slate-200 dark:bg-white/10 rounded-lg animate-pulse mb-8" />
+        <SettingsSkeleton />
       </div>
     );
   }
