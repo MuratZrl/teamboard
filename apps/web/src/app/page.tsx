@@ -67,7 +67,7 @@ const stats = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0b1120]">
+    <div className="min-h-screen bg-white dark:bg-[#0b1120] overflow-x-hidden">
       {/* Nav */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#0b1120]/80 border-b border-slate-200/60 dark:border-white/5">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -186,15 +186,15 @@ export default function LandingPage() {
       {/* Board Preview */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-6 md:p-10 shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
-            <div className="flex gap-4 overflow-x-auto pb-4">
+          <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-6 md:p-10 shadow-2xl shadow-slate-200/50 dark:shadow-black/50 overflow-hidden">
+            <div className="grid grid-cols-4 gap-4">
               {[
                 { name: 'Todo', color: 'bg-slate-400', tasks: ['Design landing page', 'Write API docs', 'Setup CI/CD'] },
                 { name: 'In Progress', color: 'bg-blue-500', tasks: ['Auth module', 'Kanban drag & drop'] },
                 { name: 'Review', color: 'bg-amber-500', tasks: ['Stripe integration'] },
                 { name: 'Done', color: 'bg-emerald-500', tasks: ['Database schema', 'Project scaffold', 'JWT auth'] },
               ].map((col) => (
-                <div key={col.name} className="w-56 flex-shrink-0">
+                <div key={col.name} className="min-w-0">
                   <div className="flex items-center gap-2 mb-3">
                     <div className={`w-2.5 h-2.5 rounded-full ${col.color}`} />
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{col.name}</span>
@@ -364,7 +364,7 @@ export default function LandingPage() {
       <footer className="border-t border-slate-200 dark:border-white/5 py-8 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <span className="text-sm text-slate-500 dark:text-slate-400">
-            &copy; 2025 TeamBoard. All rights reserved.
+            &copy; {new Date().getFullYear()} TeamBoard. All rights reserved.
           </span>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-md flex items-center justify-center">

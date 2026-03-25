@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useApi } from '@/hooks/use-api';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationBell } from '@/components/notification-bell';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   LogOut,
@@ -52,8 +52,13 @@ export default function DashboardLayout({
     );
   }
 
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
   if (status === 'unauthenticated') {
-    router.push('/login');
     return null;
   }
 
