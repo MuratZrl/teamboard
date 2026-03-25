@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:22-alpine
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 WORKDIR /app
 
@@ -19,17 +19,6 @@ RUN pnpm --filter @teamboard/api exec prisma generate
 
 # Build
 RUN pnpm --filter @teamboard/api exec nest build
-
-# Production stage
-FROM node:22-alpine AS runner
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
-WORKDIR /app
-
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=base /app/apps/api/dist ./apps/api/dist
-COPY --from=base /app/apps/api/prisma ./apps/api/prisma
-COPY --from=base /app/apps/api/package.json ./apps/api/
 
 # Create uploads directory
 RUN mkdir -p /app/apps/api/uploads
