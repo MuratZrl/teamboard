@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useApi } from '@/hooks/use-api';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { NotificationBell } from '@/components/notification-bell';
 import { useState } from 'react';
 import {
   LayoutDashboard,
@@ -66,6 +67,7 @@ export default function DashboardLayout({
           <span className="text-lg font-bold text-slate-900 dark:text-white">TeamBoard</span>
         </Link>
         <div className="flex items-center gap-1">
+          <NotificationBell />
           <ThemeToggle />
           <button
             onClick={() => setSidebarOpen(false)}
@@ -154,6 +156,9 @@ export default function DashboardLayout({
             <Kanban className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="font-bold text-slate-900 dark:text-white">TeamBoard</span>
+        </div>
+        <div className="ml-auto">
+          <NotificationBell />
         </div>
       </div>
 

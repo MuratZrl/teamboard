@@ -17,6 +17,8 @@ import { ActivityModule } from './activity/activity.module';
 import { EventsModule } from './events/events.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { NotificationModule } from './notification/notification.module';
+import { NotificationCenterModule } from './notification-center/notification-center.module';
+import { BoardTemplateModule } from './board-template/board-template.module';
 
 @Module({
   imports: [
@@ -45,6 +47,8 @@ import { NotificationModule } from './notification/notification.module';
     EventsModule,
     AnalyticsModule,
     NotificationModule,
+    NotificationCenterModule,
+    BoardTemplateModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

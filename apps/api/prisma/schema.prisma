@@ -27,6 +27,7 @@ model User {
   comments             Comment[]
   attachments          Attachment[]
   activityLogs         ActivityLog[]
+  notifications        Notification[]
 }
 
 model Workspace {
@@ -182,6 +183,29 @@ model ActivityLog {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // TASK_ASSIGNED, COMMENT_ADDED, TASK_DUE_SOON, TASK_OVERDUE, INVITE_ACCEPTED
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?  // e.g. /boards/xxx or /workspaces/xxx/settings
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+}
+
+model BoardTemplate {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  columns     String // JSON array of column names, e.g. '["Backlog","Todo","In Progress","Done"]'
+  icon        String @default("layout-grid")
 }
 
 enum Role {

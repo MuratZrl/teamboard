@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/hooks/use-api';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,8 +11,8 @@ import {
   LayoutGrid,
   BarChart3,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { CardSkeleton } from '@/components/ui/skeleton';
+import { BoardTemplateModal } from '@/components/board-template-modal';
 
 interface Board {
   id: string;
@@ -33,8 +33,7 @@ export default function WorkspaceDetailPage() {
   const { fetcher } = useApi();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [showCreate, setShowCreate] = useState(false);
-  const [boardName, setBoardName] = useState('');
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const { data: workspace } = useQuery<Workspace>({
     queryKey: ['workspace', id],
@@ -44,22 +43,6 @@ export default function WorkspaceDetailPage() {
   const { data: boards, isLoading } = useQuery<Board[]>({
     queryKey: ['boards', id],
     queryFn: () => fetcher(`workspaces/${id}/boards`),
-  });
-
-  const createBoard = useMutation({
-    mutationFn: (name: string) =>
-      fetcher(`workspaces/${id}/boards`, {
-        method: 'POST',
-        body: JSON.stringify({ name }),
-      }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['boards', id] });
-      setShowCreate(false);
-      setBoardName('');
-      toast.success('Board created');
-      router.push(`/boards/${data.id}`);
-    },
-    onError: (err) => toast.error(err.message),
   });
 
   return (
@@ -75,7 +58,7 @@ export default function WorkspaceDetailPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => setShowTemplateModal(true)}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
           >
             <Plus className="w-4 h-4" />
@@ -98,40 +81,14 @@ export default function WorkspaceDetailPage() {
         </div>
       </div>
 
-      {showCreate && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6 dark:bg-white/[0.03] dark:border-white/10">
-          <h2 className="text-lg font-semibold mb-4 dark:text-white">Create new board</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              createBoard.mutate(boardName);
-            }}
-            className="flex gap-3"
-          >
-            <input
-              value={boardName}
-              onChange={(e) => setBoardName(e.target.value)}
-              placeholder="Board name"
-              required
-              className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-slate-500"
-            />
-            <button
-              type="submit"
-              disabled={createBoard.isPending}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
-            >
-              Create
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCreate(false)}
-              className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg dark:text-slate-300 dark:hover:bg-white/5"
-            >
-              Cancel
-            </button>
-          </form>
-        </div>
-      )}
+      <BoardTemplateModal
+        workspaceId={id}
+        open={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['boards', id] });
+        }}
+      />
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -160,7 +117,7 @@ export default function WorkspaceDetailPage() {
           <LayoutGrid className="w-12 h-12 text-slate-300 mx-auto mb-4 dark:text-slate-600" />
           <p className="text-slate-500 mb-4 dark:text-slate-400">No boards yet</p>
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => setShowTemplateModal(true)}
             className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 font-medium"
           >
             Create your first board
