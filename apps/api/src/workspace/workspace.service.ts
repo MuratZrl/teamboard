@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FREE_PLAN_MAX_WORKSPACES } from '../common/constants';
 import { PaginationDto, paginate } from '../common/dto/pagination.dto';
@@ -90,6 +90,22 @@ export class WorkspaceService {
     return this.prisma.workspace.delete({
       where: { id: workspaceId },
     });
+  }
+
+  async removeMember(workspaceId: string, targetUserId: string, requestingUserId: string) {
+    const requester = await this.prisma.workspaceMember.findUnique({
+      where: { userId_workspaceId: { userId: requestingUserId, workspaceId } },
+    });
+    if (!requester || (requester.role !== 'OWNER' && requester.role !== 'ADMIN')) {
+      throw new ForbiddenException('Only owners and admins can remove members');
+    }
+    const target = await this.prisma.workspaceMember.findUnique({
+      where: { userId_workspaceId: { userId: targetUserId, workspaceId } },
+    });
+    if (!target) throw new NotFoundException('Member not found');
+    if (target.role === 'OWNER') throw new ForbiddenException('Cannot remove workspace owner');
+    if (targetUserId === requestingUserId) throw new ForbiddenException('Cannot remove yourself');
+    return this.prisma.workspaceMember.delete({ where: { id: target.id } });
   }
 
   private async hasActiveSubscription(userId: string): Promise<boolean> {

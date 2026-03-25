@@ -53,4 +53,11 @@ export class WorkspaceController {
   delete(@Param('id') id: string) {
     return this.workspaceService.delete(id);
   }
+
+  @Delete(':id/members/:userId')
+  @UseGuards(WorkspaceGuard)
+  removeMember(@Param('id') id: string, @Param('userId') userId: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.workspaceService.removeMember(id, userId, user.id);
+  }
 }

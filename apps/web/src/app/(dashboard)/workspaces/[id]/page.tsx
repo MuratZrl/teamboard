@@ -9,6 +9,7 @@ import {
   Plus,
   Settings,
   LayoutGrid,
+  BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CardSkeleton } from '@/components/ui/skeleton';
@@ -80,6 +81,13 @@ export default function WorkspaceDetailPage() {
             <Plus className="w-4 h-4" />
             New Board
           </button>
+          <Link
+            href={`/workspaces/${id}/analytics`}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </Link>
           <Link
             href={`/workspaces/${id}/settings`}
             className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"

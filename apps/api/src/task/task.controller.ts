@@ -23,8 +23,22 @@ export class TaskController {
 
   @Get('workspaces/:id/tasks')
   @UseGuards(WorkspaceGuard)
-  search(@Param('id') workspaceId: string, @Query() query: PaginationDto) {
-    return this.taskService.searchInWorkspace(workspaceId, query);
+  search(
+    @Param('id') workspaceId: string,
+    @Query() query: PaginationDto,
+    @Query('priority') priority?: string,
+    @Query('assigneeId') assigneeId?: string,
+    @Query('dueBefore') dueBefore?: string,
+    @Query('sortBy') sortBy?: 'createdAt' | 'dueDate' | 'priority' | 'updatedAt',
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ) {
+    return this.taskService.searchInWorkspace(workspaceId, query, {
+      priority,
+      assigneeId,
+      dueBefore,
+      sortBy,
+      sortOrder,
+    });
   }
 
   @Post('columns/:columnId/tasks')

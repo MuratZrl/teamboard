@@ -26,6 +26,7 @@ model User {
   createdTasks         Task[]            @relation("TaskCreator")
   comments             Comment[]
   attachments          Attachment[]
+  activityLogs         ActivityLog[]
 }
 
 model Workspace {
@@ -43,6 +44,7 @@ model Workspace {
   boards       Board[]
   labels       Label[]
   subscription Subscription?
+  activityLogs ActivityLog[]
 }
 
 model WorkspaceMember {
@@ -166,6 +168,20 @@ model Subscription {
 
   workspaceId String    @unique
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
 }
 
 enum Role {

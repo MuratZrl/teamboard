@@ -8,7 +8,9 @@ import { toast } from 'sonner';
 import { BoardColumnSkeleton } from '@/components/ui/skeleton';
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { TaskModal } from '@/components/kanban/task-modal';
+import { FilterBar, FilterState } from '@/components/kanban/filter-bar';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { useRealtime } from '@/hooks/use-realtime';
 
 export interface Label {
   id: string;
@@ -43,15 +45,32 @@ export interface Board {
   columns: Column[];
 }
 
+interface WorkspaceDetail {
+  id: string;
+  name: string;
+  members: { id: string; role: string; user: { id: string; name: string; email: string; image: string | null } }[];
+}
+
 export default function BoardPage() {
   const { id } = useParams<{ id: string }>();
   const { fetcher } = useApi();
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [filters, setFilters] = useState<FilterState>({ priority: [], assigneeId: '', dueBefore: '' });
 
   const { data: board, isLoading } = useQuery<Board>({
     queryKey: ['board', id],
     queryFn: () => fetcher(`boards/${id}`),
+  });
+
+  // Subscribe to real-time events
+  useRealtime(board?.workspaceId);
+
+  // Fetch workspace members for assignee filter
+  const { data: workspace } = useQuery<WorkspaceDetail>({
+    queryKey: ['workspace', board?.workspaceId],
+    queryFn: () => fetcher(`workspaces/${board!.workspaceId}`),
+    enabled: !!board?.workspaceId,
   });
 
   const moveTask = useMutation({
@@ -139,6 +158,46 @@ export default function BoardPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  // Filter tasks client-side
+  const filteredColumns = useMemo(() => {
+    if (!board) return [];
+    const hasFilters = filters.priority.length > 0 || filters.assigneeId || filters.dueBefore;
+    if (!hasFilters) return board.columns;
+
+    return board.columns.map((col) => ({
+      ...col,
+      tasks: col.tasks.filter((task) => {
+        // Priority filter
+        if (filters.priority.length > 0 && !filters.priority.includes(task.priority)) {
+          return false;
+        }
+        // Assignee filter
+        if (filters.assigneeId && task.assignee?.id !== filters.assigneeId) {
+          return false;
+        }
+        // Due date filter
+        if (filters.dueBefore) {
+          if (!task.dueDate) return false;
+          const due = new Date(task.dueDate);
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          if (filters.dueBefore === 'overdue') {
+            if (due >= today) return false;
+          } else if (filters.dueBefore === 'today') {
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            if (due < today || due >= tomorrow) return false;
+          } else if (filters.dueBefore === 'week') {
+            const endOfWeek = new Date(today);
+            endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
+            if (due < today || due > endOfWeek) return false;
+          }
+        }
+        return true;
+      }),
+    }));
+  }, [board, filters]);
+
   // Keyboard shortcuts
   const shortcuts = useMemo(
     () => ({
@@ -181,9 +240,15 @@ export default function BoardPage() {
         </div>
       </div>
 
+      <FilterBar
+        filters={filters}
+        onFiltersChange={setFilters}
+        members={workspace?.members || []}
+      />
+
       <div className="flex-1 overflow-x-auto p-6">
         <KanbanBoard
-          columns={board.columns}
+          columns={filteredColumns}
           onMoveTask={(taskId, columnId, order) =>
             moveTask.mutate({ taskId, columnId, order })
           }

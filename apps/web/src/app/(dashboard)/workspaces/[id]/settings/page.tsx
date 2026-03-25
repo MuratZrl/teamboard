@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import {
   Users,
   Mail,
@@ -14,9 +15,12 @@ import {
   CreditCard,
   Tag,
   Trash2,
+  Activity,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SettingsSkeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Member {
   id: string;
@@ -45,21 +49,60 @@ interface Label {
   color: string;
 }
 
+interface ActivityEntry {
+  id: string;
+  action: string;
+  createdAt: string;
+  user: { id: string; name: string; image: string | null };
+}
+
 const roleIcons = {
   OWNER: Crown,
   ADMIN: Shield,
   MEMBER: User,
 };
 
+const actionTextMap: Record<string, string> = {
+  TASK_CREATED: 'created a task',
+  TASK_UPDATED: 'updated a task',
+  TASK_MOVED: 'moved a task',
+  TASK_DELETED: 'deleted a task',
+  TASK_ASSIGNED: 'assigned a task',
+  COLUMN_CREATED: 'created a column',
+  COLUMN_DELETED: 'deleted a column',
+  MEMBER_JOINED: 'joined the workspace',
+  MEMBER_REMOVED: 'was removed from the workspace',
+  BOARD_CREATED: 'created a board',
+  BOARD_DELETED: 'deleted a board',
+  COMMENT_ADDED: 'added a comment',
+  LABEL_CREATED: 'created a label',
+};
+
 const presetColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const seconds = Math.floor((now - then) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
 
 export default function WorkspaceSettingsPage() {
   const { id } = useParams<{ id: string }>();
   const { fetcher } = useApi();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const [inviteEmail, setInviteEmail] = useState('');
   const [labelName, setLabelName] = useState('');
   const [labelColor, setLabelColor] = useState(presetColors[0]);
+  const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
 
   const { data: workspace, isLoading } = useQuery<Workspace>({
     queryKey: ['workspace', id],
@@ -75,6 +118,17 @@ export default function WorkspaceSettingsPage() {
     queryKey: ['labels', id],
     queryFn: () => fetcher(`workspaces/${id}/labels`),
   });
+
+  const { data: activityData } = useQuery<ActivityEntry[]>({
+    queryKey: ['activity', id],
+    queryFn: () => fetcher(`workspaces/${id}/activity?limit=20`),
+  });
+
+  // Determine current user's role in workspace
+  const currentUserMember = workspace?.members.find(
+    (m) => m.user.id === session?.user?.id
+  );
+  const canRemoveMembers = currentUserMember?.role === 'OWNER' || currentUserMember?.role === 'ADMIN';
 
   const inviteMutation = useMutation({
     mutationFn: (email: string) =>
@@ -113,6 +167,20 @@ export default function WorkspaceSettingsPage() {
       toast.success('Label deleted');
     },
     onError: (err) => toast.error(err.message),
+  });
+
+  const removeMember = useMutation({
+    mutationFn: (userId: string) =>
+      fetcher(`workspaces/${id}/members/${userId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', id] });
+      setMemberToRemove(null);
+      toast.success('Member removed');
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setMemberToRemove(null);
+    },
   });
 
   if (isLoading) {
@@ -217,10 +285,21 @@ export default function WorkspaceSettingsPage() {
                     <p className="text-xs text-slate-500 dark:text-slate-400">{member.user.email}</p>
                   </div>
                 </div>
-                <span className="flex items-center gap-1 text-xs font-medium text-slate-500 capitalize dark:text-slate-400">
-                  <RoleIcon className="w-3.5 h-3.5" />
-                  {member.role.toLowerCase()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 text-xs font-medium text-slate-500 capitalize dark:text-slate-400">
+                    <RoleIcon className="w-3.5 h-3.5" />
+                    {member.role.toLowerCase()}
+                  </span>
+                  {canRemoveMembers && member.role !== 'OWNER' && (
+                    <button
+                      onClick={() => setMemberToRemove(member)}
+                      className="p-1 rounded text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                      title="Remove member"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -306,6 +385,36 @@ export default function WorkspaceSettingsPage() {
         )}
       </section>
 
+      {/* Recent Activity */}
+      <section className="bg-white border border-slate-200 rounded-xl p-6 mb-6 dark:bg-white/[0.03] dark:border-white/10">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 dark:text-white">
+          <Activity className="w-5 h-5 text-blue-600" />
+          Recent Activity
+        </h2>
+        {activityData && activityData.length > 0 ? (
+          <div className="max-h-80 overflow-y-auto space-y-3 pr-1">
+            {activityData.map((entry) => (
+              <div key={entry.id} className="flex items-start gap-3 py-1.5">
+                <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-500/10 flex items-center justify-center text-blue-700 dark:text-blue-400 text-xs font-medium flex-shrink-0 mt-0.5">
+                  {entry.user.name[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <span className="font-medium text-slate-900 dark:text-white">{entry.user.name}</span>{' '}
+                    {actionTextMap[entry.action] || entry.action}
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    {timeAgo(entry.createdAt)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500">No recent activity.</p>
+        )}
+      </section>
+
       {/* Billing */}
       <section className="bg-white border border-slate-200 rounded-xl p-6 dark:bg-white/[0.03] dark:border-white/10">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 dark:text-white">
@@ -336,6 +445,19 @@ export default function WorkspaceSettingsPage() {
           )}
         </div>
       </section>
+
+      {/* Member removal confirm dialog */}
+      {memberToRemove && (
+        <ConfirmDialog
+          title="Remove Member"
+          message={`Remove ${memberToRemove.user.name} from this workspace? They will lose access to all boards and tasks.`}
+          confirmLabel="Remove"
+          destructive
+          loading={removeMember.isPending}
+          onConfirm={() => removeMember.mutate(memberToRemove.user.id)}
+          onCancel={() => setMemberToRemove(null)}
+        />
+      )}
     </div>
   );
 }

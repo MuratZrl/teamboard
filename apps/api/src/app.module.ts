@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspaceModule } from './workspace/workspace.module';
@@ -12,6 +13,10 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { CommentModule } from './comment/comment.module';
 import { LabelModule } from './label/label.module';
 import { AttachmentModule } from './attachment/attachment.module';
+import { ActivityModule } from './activity/activity.module';
+import { EventsModule } from './events/events.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -25,6 +30,7 @@ import { AttachmentModule } from './attachment/attachment.module';
         }],
       }),
     }),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     AuthModule,
     WorkspaceModule,
@@ -35,6 +41,10 @@ import { AttachmentModule } from './attachment/attachment.module';
     CommentModule,
     LabelModule,
     AttachmentModule,
+    ActivityModule,
+    EventsModule,
+    AnalyticsModule,
+    NotificationModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
