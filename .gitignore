@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+apps/api/prisma/migrations/**/migration_lock.toml
+
+# Docker
+docker-data/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# Build artifacts
+packages/shared/src/*.js
+packages/shared/src/*.d.ts

@@ -1,0 +1,19 @@
+{
+  "name": "teamboard",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "dev:api": "turbo dev --filter=@teamboard/api",
+    "dev:web": "turbo dev --filter=@teamboard/web",
+    "db:migrate": "pnpm --filter @teamboard/api exec prisma migrate dev",
+    "db:generate": "pnpm --filter @teamboard/api exec prisma generate",
+    "db:studio": "pnpm --filter @teamboard/api exec prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.20",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
