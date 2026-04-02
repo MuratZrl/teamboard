@@ -236,6 +236,27 @@ export class AuthService {
     return { message: 'Password has been reset successfully' };
   }
 
+  async demoLogin() {
+    const DEMO_EMAIL = 'demo@teamboard.dev';
+
+    const user = await this.prisma.user.findUnique({
+      where: { email: DEMO_EMAIL },
+    });
+
+    if (!user) {
+      throw new NotFoundException(
+        'Demo account not found. Please run the seed script first.',
+      );
+    }
+
+    const token = this.generateToken(user.id, user.email);
+
+    return {
+      user: { id: user.id, email: user.email, name: user.name },
+      accessToken: token,
+    };
+  }
+
   private generateToken(userId: string, email: string): string {
     return this.jwtService.sign({ sub: userId, email });
   }

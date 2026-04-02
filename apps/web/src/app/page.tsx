@@ -9,6 +9,7 @@ import {
   Kanban,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { DemoLoginButton } from '@/components/demo-login-button';
 
 const features = [
   {
@@ -129,12 +130,7 @@ export default function LandingPage() {
               Start for Free
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link
-              href="#pricing"
-              className="px-8 py-3.5 border border-slate-300 dark:border-white/10 rounded-xl font-semibold text-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-            >
-              View Pricing
-            </Link>
+            <DemoLoginButton className="flex items-center gap-2 px-8 py-3.5 border border-slate-300 dark:border-white/10 rounded-xl font-semibold text-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50" />
           </div>
         </div>
       </section>

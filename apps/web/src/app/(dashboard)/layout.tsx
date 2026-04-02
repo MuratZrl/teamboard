@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useApi } from '@/hooks/use-api';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationBell } from '@/components/notification-bell';
+import { CommandPalette } from '@/components/command-palette';
 import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
@@ -81,6 +82,10 @@ export default function DashboardLayout({
             <X className="w-5 h-5" />
           </button>
         </div>
+      </div>
+
+      <div className="px-3 pt-3">
+        <CommandPalette />
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

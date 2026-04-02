@@ -43,6 +43,12 @@ export class AuthController {
     return this.authService.resetPassword(dto.token, dto.password);
   }
 
+  @Post('demo-login')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  demoLogin() {
+    return this.authService.demoLogin();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Req() req: Request) {
