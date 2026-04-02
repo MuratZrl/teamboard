@@ -21,6 +21,22 @@ import {
   Legend,
 } from 'recharts';
 
+interface RawAnalytics {
+  totalTasks: number;
+  overdueCount: number;
+  tasksByStatus: Record<string, number>;
+  tasksByPriority: { priority: string; _count: number }[];
+  tasksCreatedPerDay: Record<string, number>;
+  tasksCompletedPerDay: Record<string, number>;
+  memberActivity: {
+    userId: string;
+    name: string;
+    image: string | null;
+    tasksCreated: number;
+    comments: number;
+  }[];
+}
+
 interface Analytics {
   totalTasks: number;
   overdueTasks: number;
@@ -34,9 +50,40 @@ interface Analytics {
     name: string;
     image: string | null;
     tasksCreated: number;
-    tasksCompleted: number;
     comments: number;
   }[];
+}
+
+function transformAnalytics(raw: RawAnalytics): Analytics {
+  const tasksByStatus = Object.entries(raw.tasksByStatus).map(([status, count]) => ({ status, count }));
+  const tasksByPriority = raw.tasksByPriority.map((p) => ({ priority: p.priority, count: p._count }));
+
+  const doneCount = raw.tasksByStatus['Done'] || 0;
+  const completionRate = raw.totalTasks > 0 ? Math.round((doneCount / raw.totalTasks) * 100) : 0;
+
+  // Merge created and completed per day into one array
+  const allDates = new Set([
+    ...Object.keys(raw.tasksCreatedPerDay || {}),
+    ...Object.keys(raw.tasksCompletedPerDay || {}),
+  ]);
+  const createdVsCompleted = Array.from(allDates)
+    .sort()
+    .map((date) => ({
+      date,
+      created: (raw.tasksCreatedPerDay || {})[date] || 0,
+      completed: (raw.tasksCompletedPerDay || {})[date] || 0,
+    }));
+
+  return {
+    totalTasks: raw.totalTasks,
+    overdueTasks: raw.overdueCount,
+    completionRate,
+    activeMembers: raw.memberActivity.length,
+    tasksByStatus,
+    tasksByPriority,
+    createdVsCompleted,
+    memberActivity: raw.memberActivity,
+  };
 }
 
 const STATUS_COLORS = ['#3b82f6', '#f59e0b', '#22c55e', '#ef4444', '#8b5cf6'];
@@ -53,12 +100,15 @@ export default function AnalyticsPage() {
 
   const { data: analytics, isLoading } = useQuery<Analytics>({
     queryKey: ['analytics', id],
-    queryFn: () => fetcher(`workspaces/${id}/analytics`),
+    queryFn: async () => {
+      const raw: RawAnalytics = await fetcher(`workspaces/${id}/analytics`);
+      return transformAnalytics(raw);
+    },
   });
 
   if (isLoading || !analytics) {
     return (
-      <div className="p-8 max-w-6xl mx-auto dark:bg-[#0b1120]">
+      <div className="p-8 max-w-5xl mx-auto dark:bg-[#0b1120]">
         <div className="h-8 w-48 bg-slate-200 dark:bg-white/10 rounded-lg animate-pulse mb-8" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[1, 2, 3, 4].map((i) => (
@@ -83,7 +133,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto dark:bg-[#0b1120]">
+    <div className="p-8 max-w-5xl mx-auto dark:bg-[#0b1120]">
       <div className="flex items-center gap-3 mb-8">
         <Link
           href={`/workspaces/${id}`}
@@ -222,8 +272,7 @@ export default function AnalyticsPage() {
             <thead>
               <tr className="border-b border-slate-200 dark:border-white/10">
                 <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Member</th>
-                <th className="text-right py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Created</th>
-                <th className="text-right py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Completed</th>
+                <th className="text-right py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Tasks Created</th>
                 <th className="text-right py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Comments</th>
               </tr>
             </thead>
@@ -239,7 +288,6 @@ export default function AnalyticsPage() {
                     </div>
                   </td>
                   <td className="text-right py-3 px-4 text-slate-600 dark:text-slate-300">{member.tasksCreated}</td>
-                  <td className="text-right py-3 px-4 text-slate-600 dark:text-slate-300">{member.tasksCompleted}</td>
                   <td className="text-right py-3 px-4 text-slate-600 dark:text-slate-300">{member.comments}</td>
                 </tr>
               ))}

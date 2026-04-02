@@ -10,6 +10,7 @@ import { NotificationBell } from '@/components/notification-bell';
 import { CommandPalette } from '@/components/command-palette';
 import { useEffect, useState } from 'react';
 import {
+  Bell,
   LayoutDashboard,
   LogOut,
   ChevronRight,
@@ -45,6 +46,12 @@ export default function DashboardLayout({
   });
   const workspaces = workspacesRes?.data;
 
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0b1120]">
@@ -52,12 +59,6 @@ export default function DashboardLayout({
       </div>
     );
   }
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
 
   if (status === 'unauthenticated') {
     return null;
@@ -101,6 +102,7 @@ export default function DashboardLayout({
           <LayoutDashboard className="w-4 h-4" />
           Workspaces
         </Link>
+
 
         {workspaces && workspaces.length > 0 && (
           <div className="pt-4">

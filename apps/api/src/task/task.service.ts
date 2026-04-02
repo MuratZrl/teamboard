@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationDto, paginate } from '../common/dto/pagination.dto';
 import { EventsService } from '../events/events.service';
@@ -149,7 +150,7 @@ export class TaskService {
   }
 
   async move(taskId: string, columnId: string, order: number) {
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const task = await tx.task.findUnique({
         where: { id: taskId },
         include: { column: { select: { board: { select: { workspaceId: true } } } } },

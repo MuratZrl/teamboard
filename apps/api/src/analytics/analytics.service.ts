@@ -71,7 +71,7 @@ export class AnalyticsService {
       select: { createdAt: true },
     });
 
-    return this.groupByDate(tasks.map((t) => t.createdAt));
+    return this.groupByDate(tasks.map((t: { createdAt: Date }) => t.createdAt));
   }
 
   private async getTasksCompletedPerDay(workspaceId: string) {
@@ -89,7 +89,7 @@ export class AnalyticsService {
       select: { updatedAt: true },
     });
 
-    return this.groupByDate(tasks.map((t) => t.updatedAt));
+    return this.groupByDate(tasks.map((t: { updatedAt: Date }) => t.updatedAt));
   }
 
   private async getMemberActivity(workspaceId: string) {
@@ -114,7 +114,7 @@ export class AnalyticsService {
       },
     });
 
-    return members.map((m) => ({
+    return members.map((m: typeof members[number]) => ({
       userId: m.user.id,
       name: m.user.name,
       image: m.user.image,

@@ -10,6 +10,7 @@ import {
   Settings,
   LayoutGrid,
   BarChart3,
+  Activity,
 } from 'lucide-react';
 import { CardSkeleton } from '@/components/ui/skeleton';
 import { BoardTemplateModal } from '@/components/board-template-modal';
@@ -70,6 +71,13 @@ export default function WorkspaceDetailPage() {
           >
             <BarChart3 className="w-4 h-4" />
             Analytics
+          </Link>
+          <Link
+            href={`/workspaces/${id}/activity`}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+          >
+            <Activity className="w-4 h-4" />
+            Activity
           </Link>
           <Link
             href={`/workspaces/${id}/settings`}

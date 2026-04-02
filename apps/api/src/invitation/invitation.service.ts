@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   FREE_PLAN_MAX_MEMBERS,
@@ -109,7 +110,7 @@ export class InvitationService {
       throw new BadRequestException('Invitation has expired');
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.workspaceMember.create({
         data: {
           userId,

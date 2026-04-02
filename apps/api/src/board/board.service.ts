@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { DEFAULT_COLUMNS } from '../common/constants';
 
@@ -89,7 +90,7 @@ export class BoardService {
 
   async reorderColumns(boardId: string, columnIds: string[]) {
     // Use a transaction to reorder — set all to negative first to avoid unique constraint
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Set all orders to negative to avoid conflicts
       for (let i = 0; i < columnIds.length; i++) {
         await tx.column.update({

@@ -24,7 +24,7 @@ export default function BillingPage() {
   });
 
   return (
-    <div className="p-8 max-w-3xl mx-auto dark:bg-[#0b1120]">
+    <div className="p-8 max-w-5xl mx-auto dark:bg-[#0b1120]">
       <h1 className="text-2xl font-bold text-slate-900 mb-8 dark:text-white">Plan & Billing</h1>
 
       {success && (

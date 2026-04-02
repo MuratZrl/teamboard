@@ -119,10 +119,11 @@ export default function WorkspaceSettingsPage() {
     queryFn: () => fetcher(`workspaces/${id}/labels`),
   });
 
-  const { data: activityData } = useQuery<ActivityEntry[]>({
+  const { data: activityRes } = useQuery<{ data: ActivityEntry[] }>({
     queryKey: ['activity', id],
     queryFn: () => fetcher(`workspaces/${id}/activity?limit=20`),
   });
+  const activityData = activityRes?.data;
 
   // Determine current user's role in workspace
   const currentUserMember = workspace?.members.find(
@@ -185,7 +186,7 @@ export default function WorkspaceSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 max-w-3xl mx-auto">
+      <div className="p-8 max-w-5xl mx-auto">
         <div className="h-8 w-60 bg-slate-200 dark:bg-white/10 rounded-lg animate-pulse mb-8" />
         <SettingsSkeleton />
       </div>
@@ -193,7 +194,7 @@ export default function WorkspaceSettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto dark:bg-[#0b1120]">
+    <div className="p-8 max-w-5xl mx-auto dark:bg-[#0b1120]">
       <h1 className="text-2xl font-bold text-slate-900 mb-8 dark:text-white">
         {workspace?.name} — Settings
       </h1>

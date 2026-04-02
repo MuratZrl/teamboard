@@ -1,4 +1,5 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { FREE_PLAN_MAX_WORKSPACES } from '../common/constants';
 import { PaginationDto, paginate } from '../common/dto/pagination.dto';
@@ -28,7 +29,7 @@ export class WorkspaceService {
       '-' +
       Date.now().toString(36);
 
-    const workspace = await this.prisma.$transaction(async (tx) => {
+    const workspace = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const ws = await tx.workspace.create({
         data: { name, slug, ownerId: userId },
       });

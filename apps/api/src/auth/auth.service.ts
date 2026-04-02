@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -32,7 +33,7 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
-    const user = await this.prisma.$transaction(async (tx) => {
+    const user = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const newUser = await tx.user.create({
         data: {
           email: dto.email,
@@ -119,7 +120,7 @@ export class AuthService {
     });
 
     if (!user) {
-      user = await this.prisma.$transaction(async (tx) => {
+      user = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const newUser = await tx.user.create({
           data: {
             email: payload.email,
