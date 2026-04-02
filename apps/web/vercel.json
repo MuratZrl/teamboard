@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && corepack enable && pnpm install --no-frozen-lockfile",
+  "installCommand": "npx pnpm@9.14.2 install",
   "buildCommand": "cd ../.. && pnpm --filter @teamboard/web build"
 }
