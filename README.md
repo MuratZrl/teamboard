@@ -6,6 +6,20 @@ Multi-tenant project management SaaS with kanban boards, team workspaces, and ro
 
 ---
 
+## Screenshots
+
+![Landing Page](docs/screenshots/landing-page.png)
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+![Kanban Board](docs/screenshots/kanban-board.png)
+
+![Task Detail](docs/screenshots/task-detail.png)
+
+![Analytics](docs/screenshots/analytics.png)
+
+---
+
 ## Architecture
 
 ```

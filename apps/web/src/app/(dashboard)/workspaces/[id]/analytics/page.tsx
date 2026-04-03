@@ -86,7 +86,7 @@ function transformAnalytics(raw: RawAnalytics): Analytics {
   };
 }
 
-const STATUS_COLORS = ['#3b82f6', '#f59e0b', '#22c55e', '#ef4444', '#8b5cf6'];
+const STATUS_COLORS = ['#3b82f6', '#f59e0b', '#22c55e', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: '#94a3b8',
   MEDIUM: '#3b82f6',
@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
 
   if (isLoading || !analytics) {
     return (
-      <div className="p-8 max-w-5xl mx-auto dark:bg-[#0b1120]">
+      <div className="p-8 max-w-6xl mx-auto dark:bg-[#0b1120]">
         <div className="h-8 w-48 bg-slate-200 dark:bg-white/10 rounded-lg animate-pulse mb-8" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[1, 2, 3, 4].map((i) => (
@@ -133,7 +133,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto dark:bg-[#0b1120]">
+    <div className="p-8 max-w-6xl mx-auto dark:bg-[#0b1120]">
       <div className="flex items-center gap-3 mb-8">
         <Link
           href={`/workspaces/${id}`}
@@ -181,16 +181,16 @@ export default function AnalyticsPage() {
         {/* Tasks by Status - Pie Chart */}
         <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Tasks by Status</h2>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
                 data={analytics.tasksByStatus}
                 dataKey="count"
                 nameKey="status"
-                cx="50%"
+                cx="35%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius={50}
+                outerRadius={90}
                 paddingAngle={2}
               >
                 {analytics.tasksByStatus.map((_, index) => (
@@ -205,7 +205,13 @@ export default function AnalyticsPage() {
                   color: '#fff',
                 }}
               />
-              <Legend />
+              <Legend
+                layout="vertical"
+                align="right"
+                verticalAlign="middle"
+                iconSize={10}
+                wrapperStyle={{ fontSize: '12px', lineHeight: '20px' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -217,14 +223,17 @@ export default function AnalyticsPage() {
             <BarChart data={analytics.tasksByPriority}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
               <XAxis dataKey="priority" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-              <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                  border: 'none',
+                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                  border: '1px solid rgba(148, 163, 184, 0.3)',
                   borderRadius: '8px',
                   color: '#fff',
+                  padding: '8px 12px',
                 }}
+                itemStyle={{ color: '#e2e8f0' }}
+                labelStyle={{ color: '#fff', fontWeight: 600 }}
               />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                 {analytics.tasksByPriority.map((entry) => (
@@ -247,7 +256,7 @@ export default function AnalyticsPage() {
               tick={{ fill: '#94a3b8', fontSize: 12 }}
               tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+            <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'rgba(15, 23, 42, 0.9)',
