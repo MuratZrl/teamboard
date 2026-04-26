@@ -36,9 +36,9 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError('Registration failed. Email may already be in use.');
+      setError(`Registration failed: ${result.error}${result.code ? ` (${result.code})` : ''}`);
     } else if (result?.code) {
-      setError('Registration failed. Please try again.');
+      setError(`Registration failed: ${result.code}`);
     } else {
       router.push('/workspaces');
     }
