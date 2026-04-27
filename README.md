@@ -315,11 +315,11 @@ User ──< WorkspaceMember >── Workspace
 
 ## Deployment
 
-| Service | Platform | URL |
-|---------|----------|-----|
-| Frontend | Vercel | teamboard-web.vercel.app |
-| API | Railway | teamboard-production-77f7.up.railway.app |
-| Database | Railway PostgreSQL | Internal |
+| Service | Platform |
+|---------|----------|
+| Frontend | Vercel |
+| API | Railway |
+| Database | Railway PostgreSQL |
 
 ### Deploy your own
 
