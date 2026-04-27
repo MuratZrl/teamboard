@@ -129,9 +129,21 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.4)
+      '@tailwindcss/postcss':
+        specifier: ^4.2.2
+        version: 4.2.2
       '@tanstack/react-query':
         specifier: ^5.95.2
         version: 5.95.2(react@19.2.4)
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -147,6 +159,9 @@ importers:
       next-auth:
         specifier: 5.0.0-beta.30
         version: 5.0.0-beta.30(next@16.2.1(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      postcss:
+        specifier: ^8.5.8
+        version: 8.5.8
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -162,37 +177,22 @@ importers:
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
-    devDependencies:
-      '@playwright/test':
-        specifier: ^1.58.2
-        version: 1.58.2
-      '@tailwindcss/postcss':
-        specifier: ^4.2.2
-        version: 4.2.2
-      '@types/node':
-        specifier: ^25.5.0
-        version: 25.5.0
-      '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.14)
-      eslint:
-        specifier: ^9.39.4
-        version: 9.39.4(jiti@2.6.1)
-      eslint-config-next:
-        specifier: 16.2.1
-        version: 16.2.1(@typescript-eslint/parser@8.57.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      postcss:
-        specifier: ^8.5.8
-        version: 8.5.8
       tailwindcss:
         specifier: ^4.2.2
         version: 4.2.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.58.2
+        version: 1.58.2
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@2.6.1)
+      eslint-config-next:
+        specifier: 16.2.1
+        version: 16.2.1(@typescript-eslint/parser@8.57.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
 
   packages/shared:
     dependencies:
