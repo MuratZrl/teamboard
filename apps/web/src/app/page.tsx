@@ -5,7 +5,6 @@ import {
   Shield,
   Check,
   ArrowRight,
-  Star,
   Kanban,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -38,32 +37,11 @@ const features = [
   },
 ];
 
-const testimonials = [
-  {
-    name: 'Sarah Chen',
-    role: 'Engineering Lead at Acme',
-    text: 'TeamBoard replaced our bloated PM tool. The simplicity is refreshing — my team actually uses it.',
-    avatar: 'SC',
-  },
-  {
-    name: 'Marcus Rivera',
-    role: 'Founder at LaunchPad',
-    text: 'We set up our workspace in 5 minutes and were tracking tasks immediately. No training needed.',
-    avatar: 'MR',
-  },
-  {
-    name: 'Ayesha Patel',
-    role: 'Product Manager at CloudSync',
-    text: 'The multi-tenant setup means I manage 3 client projects without any data leaking between them.',
-    avatar: 'AP',
-  },
-];
-
-const stats = [
-  { value: '10k+', label: 'Tasks created' },
-  { value: '500+', label: 'Teams' },
-  { value: '99.9%', label: 'Uptime' },
-  { value: '<50ms', label: 'API response' },
+const highlights = [
+  { value: 'Open source', label: 'MIT licensed' },
+  { value: 'Self-hostable', label: 'Run it anywhere' },
+  { value: 'Multi-tenant', label: 'Isolated workspaces' },
+  { value: 'Real-time', label: 'Live collaboration' },
 ];
 
 export default function LandingPage() {
@@ -135,13 +113,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Highlights */}
       <section className="border-y border-slate-200/60 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
         <div className="max-w-5xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{stat.label}</p>
+          {highlights.map((item) => (
+            <div key={item.label} className="text-center">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{item.value}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{item.label}</p>
             </div>
           ))}
         </div>
@@ -258,10 +236,7 @@ export default function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className="relative bg-white dark:bg-white/[0.03] border-2 border-blue-600 dark:border-blue-500 rounded-2xl p-8">
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold px-4 py-1 rounded-full">
-                Most Popular
-              </span>
+            <div className="relative bg-white dark:bg-white/[0.03] border-2 border-blue-600 dark:border-blue-500 rounded-2xl p-8 shadow-xl shadow-blue-600/10 dark:shadow-blue-500/10">
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Pro</h3>
               <p className="text-4xl font-bold text-slate-900 dark:text-white mt-4">
                 $12<span className="text-base font-normal text-slate-500 dark:text-slate-400">/month</span>
@@ -273,7 +248,7 @@ export default function LandingPage() {
                   'Unlimited members',
                   'Unlimited boards',
                   'Unlimited tasks',
-                  'Priority support',
+                  'Email support',
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                     <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -288,43 +263,6 @@ export default function LandingPage() {
                 Start Free Trial
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
-              Trusted by teams everywhere
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div
-                key={t.name}
-                className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6"
-              >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold">
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{t.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
