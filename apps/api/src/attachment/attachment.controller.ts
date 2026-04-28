@@ -1,17 +1,12 @@
 import {
-  Controller, Post, Get, Delete, Param, UseGuards, Req, Res,
+  Controller, Post, Get, Delete, Param, UseGuards, Req,
   UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AttachmentService } from './attachment.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Request, Response } from 'express';
-import { diskStorage } from 'multer';
-import * as path from 'path';
-import * as fs from 'fs';
-
-const tmpDir = path.join(process.cwd(), 'uploads', 'tmp');
-fs.mkdirSync(tmpDir, { recursive: true });
+import { Request } from 'express';
+import { memoryStorage } from 'multer';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -20,12 +15,7 @@ export class AttachmentController {
 
   @Post('tasks/:taskId/attachments')
   @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: tmpDir,
-        filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-      }),
-    }),
+    FileInterceptor('file', { storage: memoryStorage() }),
   )
   upload(
     @Param('taskId') taskId: string,
@@ -46,10 +36,9 @@ export class AttachmentController {
     return this.attachmentService.findByTask(taskId);
   }
 
-  @Get('attachments/:id/download')
-  async download(@Param('id') id: string, @Res() res: Response) {
-    const attachment = await this.attachmentService.getFile(id);
-    res.download(attachment.path, attachment.filename);
+  @Get('attachments/:id/url')
+  getUrl(@Param('id') id: string) {
+    return this.attachmentService.getPresignedUrl(id);
   }
 
   @Delete('attachments/:id')

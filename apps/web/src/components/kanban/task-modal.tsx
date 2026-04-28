@@ -113,6 +113,15 @@ export function TaskModal({ task, workspaceId, onClose, onUpdate, onDelete }: Ta
     },
   });
 
+  async function handleDownload(id: string) {
+    try {
+      const { url } = await fetcher(`attachments/${id}/url`);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      toast.error('Could not open file');
+    }
+  }
+
   function handleSave() {
     onUpdate({
       title,
@@ -336,13 +345,14 @@ export function TaskModal({ task, workspaceId, onClose, onUpdate, onDelete }: Ta
                     <p className="text-sm text-slate-900 dark:text-white truncate">{att.filename}</p>
                     <p className="text-xs text-slate-400">{formatSize(att.size)}</p>
                   </div>
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/attachments/${att.id}/download`}
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(att.id)}
                     className="p-1 text-slate-400 hover:text-blue-500"
                     title="Download"
                   >
                     <Download className="w-4 h-4" />
-                  </a>
+                  </button>
                   <button
                     onClick={() => deleteAttachment.mutate(att.id)}
                     className="p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
