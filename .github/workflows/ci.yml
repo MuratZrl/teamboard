@@ -13,14 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @teamboard/api exec prisma generate
       - run: pnpm build
 
   api-typecheck:
@@ -45,13 +43,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @teamboard/api exec prisma migrate deploy
       - run: pnpm --filter @teamboard/api exec prisma generate
@@ -87,25 +82,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @teamboard/api exec prisma migrate deploy
       - run: pnpm --filter @teamboard/api exec prisma generate
       - run: pnpm --filter @teamboard/web exec playwright install --with-deps chromium
-
-      # Start API in background
       - run: pnpm --filter @teamboard/api exec nest build
       - run: node apps/api/dist/main.js &
         env:
           NODE_ENV: test
-
-      # Build and start web in background
       - run: pnpm --filter @teamboard/web build
         env:
           GOOGLE_CLIENT_ID: placeholder
@@ -114,15 +102,10 @@ jobs:
         env:
           GOOGLE_CLIENT_ID: placeholder
           GOOGLE_CLIENT_SECRET: placeholder
-
-      # Wait for services
       - run: npx wait-on http://localhost:4000/api/auth/me http://localhost:3000 --timeout 60000 || true
-
-      # Run E2E tests
       - run: pnpm --filter @teamboard/web test:e2e
         env:
           CI: true
-
       - uses: actions/upload-artifact@v4
         if: always()
         with:

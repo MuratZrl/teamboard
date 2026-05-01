@@ -54,8 +54,13 @@ export class WorkspaceController {
     return this.workspaceService.delete(id);
   }
 
+  // Fix: H1 — declarative role check, consistent with sibling endpoints.
+  // Service-layer role enforcement in workspace.service.removeMember is kept
+  // as defense in depth (covers any non-controller caller path and carries
+  // self-removal / last-owner business rules).
   @Delete(':id/members/:userId')
-  @UseGuards(WorkspaceGuard)
+  @UseGuards(WorkspaceGuard, RoleGuard)
+  @Roles('OWNER', 'ADMIN')
   removeMember(@Param('id') id: string, @Param('userId') userId: string, @Req() req: Request) {
     const user = req.user as { id: string };
     return this.workspaceService.removeMember(id, userId, user.id);

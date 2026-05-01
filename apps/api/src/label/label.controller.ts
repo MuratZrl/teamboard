@@ -2,6 +2,7 @@ import { Controller, Post, Get, Delete, Body, Param, UseGuards } from '@nestjs/c
 import { LabelService } from './label.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WorkspaceGuard } from '../common/guards/workspace.guard';
+import { LabelWorkspaceGuard } from '../common/guards/resource.guard';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -23,7 +24,9 @@ export class LabelController {
     return this.labelService.findByWorkspace(workspaceId);
   }
 
+  // Fix: C1 — workspace membership check via LabelWorkspaceGuard
   @Delete('labels/:id')
+  @UseGuards(LabelWorkspaceGuard)
   delete(@Param('id') id: string) {
     return this.labelService.delete(id);
   }
