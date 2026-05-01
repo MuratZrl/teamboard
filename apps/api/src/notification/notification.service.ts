@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationCenterService } from '../notification-center/notification-center.service';
+import { escapeHtml } from '../common/utils/html';
 
 @Injectable()
 export class NotificationService {
@@ -34,13 +35,16 @@ export class NotificationService {
     }
 
     if (this.resend) {
+      // Fix: H2 — escape user-controlled values before HTML interpolation.
+      const safeTaskTitle = escapeHtml(taskTitle);
+      const safeWorkspaceName = escapeHtml(workspaceName);
       await this.resend.emails.send({
         from: 'TeamBoard <noreply@teamboard.dev>',
         to: assigneeEmail,
         subject: `You've been assigned to "${taskTitle}" in ${workspaceName}`,
         html: `
           <h2>Task Assigned</h2>
-          <p>You've been assigned to the task <strong>${taskTitle}</strong> in workspace <strong>${workspaceName}</strong>.</p>
+          <p>You've been assigned to the task <strong>${safeTaskTitle}</strong> in workspace <strong>${safeWorkspaceName}</strong>.</p>
           <p>Log in to TeamBoard to view the details.</p>
         `,
       });
@@ -66,13 +70,16 @@ export class NotificationService {
     }
 
     if (this.resend) {
+      // Fix: H2 — escape user-controlled values before HTML interpolation.
+      const safeCommenterName = escapeHtml(commenterName);
+      const safeTaskTitle = escapeHtml(taskTitle);
       await this.resend.emails.send({
         from: 'TeamBoard <noreply@teamboard.dev>',
         to: recipientEmail,
         subject: `${commenterName} commented on "${taskTitle}"`,
         html: `
           <h2>New Comment</h2>
-          <p><strong>${commenterName}</strong> left a comment on <strong>${taskTitle}</strong>.</p>
+          <p><strong>${safeCommenterName}</strong> left a comment on <strong>${safeTaskTitle}</strong>.</p>
           <p>Log in to TeamBoard to view the comment.</p>
         `,
       });
@@ -98,13 +105,16 @@ export class NotificationService {
     }
 
     if (this.resend) {
+      // Fix: H2 — escape user-controlled values before HTML interpolation.
+      const safeMemberName = escapeHtml(memberName);
+      const safeWorkspaceName = escapeHtml(workspaceName);
       await this.resend.emails.send({
         from: 'TeamBoard <noreply@teamboard.dev>',
         to: ownerEmail,
         subject: `${memberName} joined ${workspaceName}`,
         html: `
           <h2>Invitation Accepted</h2>
-          <p><strong>${memberName}</strong> has accepted the invitation and joined <strong>${workspaceName}</strong>.</p>
+          <p><strong>${safeMemberName}</strong> has accepted the invitation and joined <strong>${safeWorkspaceName}</strong>.</p>
         `,
       });
     } else {

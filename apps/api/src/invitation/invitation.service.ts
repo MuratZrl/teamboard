@@ -13,6 +13,7 @@ import {
   FREE_PLAN_MAX_MEMBERS,
   INVITATION_EXPIRY_DAYS,
 } from '../common/constants';
+import { escapeHtml } from '../common/utils/html';
 
 @Injectable()
 export class InvitationService {
@@ -74,14 +75,18 @@ export class InvitationService {
     const inviteLink = `${frontendUrl}/invite/${token}`;
 
     if (this.resend) {
+      // Fix: H2 — escape user-controlled values before HTML interpolation.
+      // Subject is a plain-text mail header, not HTML, so it stays unescaped.
+      const safeWorkspaceName = escapeHtml(workspace.name);
+      const safeInviteLink = escapeHtml(inviteLink);
       await this.resend.emails.send({
         from: 'TeamBoard <noreply@teamboard.dev>',
         to: email,
         subject: `You're invited to join ${workspace.name} on TeamBoard`,
         html: `
           <h2>You've been invited!</h2>
-          <p>You've been invited to join <strong>${workspace.name}</strong> on TeamBoard.</p>
-          <p><a href="${inviteLink}" style="background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;">Accept Invitation</a></p>
+          <p>You've been invited to join <strong>${safeWorkspaceName}</strong> on TeamBoard.</p>
+          <p><a href="${safeInviteLink}" style="background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;">Accept Invitation</a></p>
           <p>This invitation expires in ${INVITATION_EXPIRY_DAYS} days.</p>
         `,
       });
