@@ -206,6 +206,12 @@ identifiers. SaaS convention varies. Decision pending.
 
 \- \*\*Low\*\* — no e2e/integration test coverage for any API endpoint;
 
+- **Low** — E2E Playwright tests have been failing on main since at least
+  April 4 2026 (CI run #21+). Web server fails to start in CI workflow;
+  Playwright cannot reach localhost:3000. Pre-existing issue, not caused
+  by the security pass. Likely candidates: missing env var, port conflict,
+  or production build runtime error. Investigate as a separate CI fix.
+
 &#x20; guards work in dev but unverified in CI.
 
 
