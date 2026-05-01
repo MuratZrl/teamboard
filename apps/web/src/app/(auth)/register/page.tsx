@@ -5,43 +5,106 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
+type FieldErrors = { email?: string; password?: string; name?: string; form?: string };
+
+// Backend returns class-validator messages that look like
+// "password must be longer than or equal to 8 characters". Map by prefix
+// so we can attach errors to the right field.
+function distributeValidationErrors(messages: string[]): FieldErrors {
+  const out: FieldErrors = {};
+  for (const m of messages) {
+    if (m.startsWith('email')) out.email = m;
+    else if (m.startsWith('password')) out.password = m;
+    else if (m.startsWith('name')) out.name = m;
+    else out.form = m;
+  }
+  return out;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
+    setErrors({});
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setErrors({ password: 'Passwords do not match' });
       return;
     }
 
     setLoading(true);
 
+    // Step 1: register directly. Bypasses NextAuth's authorize() so we can
+    // surface the backend's actual message (including class-validator detail).
+    let registerRes: Response;
+    try {
+      registerRes = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+    } catch {
+      setLoading(false);
+      setErrors({ form: 'Something went wrong on our side. Please try again.' });
+      return;
+    }
+
+    if (!registerRes.ok) {
+      setLoading(false);
+      let body: { message?: unknown; statusCode?: number } | null = null;
+      try {
+        body = await registerRes.json();
+      } catch {
+        body = null;
+      }
+
+      if (registerRes.status === 409) {
+        setErrors({ email: 'An account with this email already exists.' });
+        return;
+      }
+      if (registerRes.status === 400 && Array.isArray(body?.message)) {
+        setErrors(distributeValidationErrors(body!.message as string[]));
+        return;
+      }
+      if (registerRes.status === 429) {
+        setErrors({ form: 'Too many attempts. Please wait a minute and try again.' });
+        return;
+      }
+      setErrors({ form: 'Something went wrong on our side. Please try again.' });
+      return;
+    }
+
+    // Step 2: account exists — chain signIn() to create the session.
     const result = await signIn('credentials', {
-      name,
       email,
       password,
-      isRegister: 'true',
       redirect: false,
     });
 
     setLoading(false);
 
     if (result?.error) {
-      setError(`Registration failed: ${result.error}${result.code ? ` (${result.code})` : ''}`);
-    } else if (result?.code) {
-      setError(`Registration failed: ${result.code}`);
-    } else {
-      router.push('/workspaces');
+      // Account was created but session creation failed. Don't leave the user
+      // stuck — send them to /login with the email pre-filled so they can
+      // sign in manually. The account is real; this is just a session hiccup.
+      const params = new URLSearchParams({
+        email,
+        notice: 'account_created',
+      });
+      router.push(`/login?${params.toString()}`);
+      return;
     }
+
+    router.push('/workspaces');
   }
 
   return (
@@ -74,9 +137,9 @@ export default function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
+        {errors.form && (
           <div className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
-            {error}
+            {errors.form}
           </div>
         )}
         <div>
@@ -92,6 +155,7 @@ export default function RegisterPage() {
             className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-slate-400 dark:placeholder-slate-500"
             placeholder="John Doe"
           />
+          {errors.name && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.name}</p>}
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -106,6 +170,7 @@ export default function RegisterPage() {
             className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-slate-400 dark:placeholder-slate-500"
             placeholder="you@example.com"
           />
+          {errors.email && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.email}</p>}
         </div>
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -121,6 +186,7 @@ export default function RegisterPage() {
             className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-slate-400 dark:placeholder-slate-500"
             placeholder="Min. 8 characters"
           />
+          {errors.password && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.password}</p>}
         </div>
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">

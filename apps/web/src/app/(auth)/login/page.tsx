@@ -4,16 +4,23 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
+import { getAuthErrorMessage } from '@/lib/auth-errors';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState('');
+  const initialEmail = searchParams.get('email') ?? '';
+  const noticeParam = searchParams.get('notice');
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const callbackUrl = searchParams.get('callbackUrl') || '/workspaces';
+  const notice =
+    noticeParam === 'account_created'
+      ? 'Account created — please sign in to continue.'
+      : '';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,17 +30,18 @@ function LoginForm() {
     const result = await signIn('credentials', {
       email,
       password,
-      isRegister: 'false',
       redirect: false,
     });
 
     setLoading(false);
 
     if (result?.error) {
-      setError(`Login failed: ${result.error}${result.code ? ` (${result.code})` : ''}`);
-    } else {
-      router.push(callbackUrl);
+      // result.code is the AuthErrorCode we threw via AuthCodeError.
+      // For wrong password the backend now produces invalid_credentials.
+      setError(getAuthErrorMessage(result.code, 'Login failed. Please try again.'));
+      return;
     }
+    router.push(callbackUrl);
   }
 
   return (
@@ -66,8 +74,13 @@ function LoginForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {notice && !error && (
+          <div className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-sm px-4 py-3 rounded-lg">
+            {notice}
+          </div>
+        )}
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">
+          <div className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
