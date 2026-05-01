@@ -72,10 +72,11 @@ export function BoardTemplateModal({
   });
 
   const createFromTemplate = useMutation({
+    // Fix: C2 — call the new workspace-scoped route; workspaceId is now in the URL.
     mutationFn: ({ templateId, name }: { templateId: string; name: string }) =>
-      fetcher(`board-templates/${templateId}/create`, {
+      fetcher(`workspaces/${workspaceId}/boards/from-template/${templateId}`, {
         method: 'POST',
-        body: JSON.stringify({ workspaceId, name }),
+        body: JSON.stringify({ name }),
       }),
     onSuccess: (data) => {
       toast.success('Board created from template');
