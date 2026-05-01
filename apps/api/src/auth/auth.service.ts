@@ -238,6 +238,19 @@ export class AuthService {
   }
 
   async demoLogin() {
+    // Fix: C3 — disable demo login in production.
+    // - 404 (not 403) so the route is indistinguishable from a non-existent
+    //   one; an attacker can't fingerprint that demo auth ever existed here.
+    // - This gate assumes the demo user is NOT seeded in the production DB.
+    //   Verified at the time of writing: no CI step, Dockerfile CMD, or
+    //   Railway hook runs `prisma/seed.ts`; `db:seed` is a local-only script.
+    //   If that ever changes, this gate alone is no longer sufficient — the
+    //   seeded credential becomes attackable via the regular /auth/login
+    //   route. See follow-up note "C3-followup" in the audit's running list.
+    if (this.config.get<string>('NODE_ENV') === 'production') {
+      throw new NotFoundException();
+    }
+
     const DEMO_EMAIL = 'demo@teamboard.dev';
 
     const user = await this.prisma.user.findUnique({
