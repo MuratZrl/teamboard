@@ -1,8 +1,19 @@
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
+import { classifyAuthError } from './auth-errors';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
+// CredentialsSignin subclass so signIn() returns { error: 'CredentialsSignin', code }.
+// Throwing a plain Error in NextAuth v5 surfaces as result.error === 'Configuration',
+// which is what produced the user-visible "Registration failed: Configuration".
+class AuthCodeError extends CredentialsSignin {
+  constructor(code: string) {
+    super(code);
+    this.code = code;
+  }
+}
 
 const providers: any[] = [];
 
@@ -17,43 +28,55 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_ID !== 'placeholde
 
 providers.push(
   Credentials({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-        name: { label: 'Name', type: 'text' },
-        isRegister: { label: 'Is Register', type: 'text' },
-      },
-      async authorize(credentials) {
-        const isRegister = credentials.isRegister === 'true';
-        const endpoint = isRegister ? 'auth/register' : 'auth/login';
-
-        const body: Record<string, unknown> = {
-          email: credentials.email,
-          password: credentials.password,
-        };
-        if (isRegister) body.name = credentials.name;
-
-        const res = await fetch(`${API_URL}/${endpoint}`, {
+    name: 'credentials',
+    credentials: {
+      email: { label: 'Email', type: 'email' },
+      password: { label: 'Password', type: 'password' },
+    },
+    async authorize(credentials) {
+      let res: Response;
+      try {
+        res = await fetch(`${API_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password,
+          }),
         });
+      } catch {
+        // Network failure / API unreachable. Surface as server_error rather than
+        // letting NextAuth wrap it as a Configuration error.
+        throw new AuthCodeError('server_error');
+      }
 
-        if (!res.ok) {
-          const error = await res.json();
-          throw new Error(error.message || 'Authentication failed');
+      if (!res.ok) {
+        // Defensive parse: a misconfigured proxy or 500 page can return non-JSON.
+        // Falling through to server_error is better than throwing Configuration.
+        let body: { message?: unknown } | null = null;
+        try {
+          body = await res.json();
+        } catch {
+          body = null;
         }
+        throw new AuthCodeError(classifyAuthError(res.status, body));
+      }
 
-        const data = await res.json();
-        return {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          accessToken: data.accessToken,
-        };
-      },
-    }),
+      let data: any;
+      try {
+        data = await res.json();
+      } catch {
+        throw new AuthCodeError('server_error');
+      }
+
+      return {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        accessToken: data.accessToken,
+      };
+    },
+  }),
 );
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
