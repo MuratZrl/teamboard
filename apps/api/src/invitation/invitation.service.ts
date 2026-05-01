@@ -110,6 +110,21 @@ export class InvitationService {
       throw new BadRequestException('Invitation has expired');
     }
 
+    // Fix: C4 — verify the invitation was issued to the calling user's email.
+    // Re-read the user's email from the DB (not the JWT claim) so a stale token
+    // can't beat the check. Compare case-insensitively per RFC 5321 local-part
+    // norms; the schema does not normalize email casing on store.
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      throw new ForbiddenException(
+        'This invitation was issued to a different email address',
+      );
+    }
+
     await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.workspaceMember.create({
         data: {
