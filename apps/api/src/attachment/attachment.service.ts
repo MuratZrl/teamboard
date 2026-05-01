@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -13,6 +14,9 @@ export class AttachmentService {
     taskId: string,
     uploaderId: string,
     file: { originalname: string; path: string; size: number; mimetype: string },
+    // Fix: H3 — caller passes the validated extension; service no longer
+    // trusts originalname for anything that touches disk.
+    validatedExt: string,
   ) {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
@@ -23,7 +27,21 @@ export class AttachmentService {
     const destDir = path.join(this.uploadDir, task.column.board.workspaceId, taskId);
     fs.mkdirSync(destDir, { recursive: true });
 
-    const destPath = path.join(destDir, `${Date.now()}-${file.originalname}`);
+    // Fix: H3 — generate the on-disk filename from a UUID + validated ext.
+    // The attacker-controlled originalname is preserved only as DB metadata
+    // (frontend MUST render it as text, never as HTML).
+    const storedName = `${randomUUID()}${validatedExt}`;
+    const destPath = path.join(destDir, storedName);
+
+    // Fix: H3 — defense-in-depth path containment check. Even if storedName
+    // ever leaks attacker control in the future, refuse to write outside
+    // destDir. path.resolve normalizes any traversal segments.
+    const resolvedDest = path.resolve(destPath);
+    const resolvedRoot = path.resolve(destDir);
+    if (!resolvedDest.startsWith(resolvedRoot + path.sep)) {
+      throw new BadRequestException('Invalid file path');
+    }
+
     fs.renameSync(file.path, destPath);
 
     return this.prisma.attachment.create({
