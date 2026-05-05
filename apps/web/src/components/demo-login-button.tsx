@@ -21,6 +21,7 @@ export function DemoLoginButton({ className }: { className?: string }) {
 
       if (result?.ok) {
         router.push('/workspaces');
+        router.refresh();
       }
     } finally {
       setLoading(false);

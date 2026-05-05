@@ -33,6 +33,7 @@ function LoginForm() {
       setError(`Login failed: ${result.error}${result.code ? ` (${result.code})` : ''}`);
     } else {
       router.push(callbackUrl);
+      router.refresh();
     }
   }
 
