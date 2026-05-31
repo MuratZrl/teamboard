@@ -24,7 +24,14 @@ export class AttachmentService {
     const ext = extractExt(file.originalname);
     const key = `${task.column.board.workspaceId}/${taskId}/${randomUUID()}.${ext}`;
 
-    await this.r2.uploadFile(key, file.buffer, file.mimetype);
+    // Fix: store the object with a neutral Content-Type so the presigned GET
+    // serves it as a download rather than rendering active content (HTML/SVG)
+    // inline. The old disk download forced octet-stream + nosniff per-response;
+    // presigning can't set per-request response headers without touching the
+    // download path, and R2Service.uploadFile only carries Content-Type, so we
+    // bake the safe type into the stored object here. The real MIME type is
+    // still kept on the DB row below for display.
+    await this.r2.uploadFile(key, file.buffer, 'application/octet-stream');
 
     return this.prisma.attachment.create({
       data: {
