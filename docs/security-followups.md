@@ -214,6 +214,18 @@ identifiers. SaaS convention varies. Decision pending.
 
 &#x20; guards work in dev but unverified in CI.
 
+- **Low** — Backend CORS allowlist only includes the production frontend
+  domain (teamboard-web.vercel.app), not Vercel preview deployments.
+  This prevents preview testing of frontend changes that hit the API.
+  Surfaced when testing register fix preview — POST /auth/register was
+  blocked by CORS, masking the actual fix as a network error. Add
+  preview-pattern wildcards to backend CORS config in a future backend PR.
+
+- **Low (resolved 2026-05-01)** — Register flow showed generic NextAuth
+  "Configuration" error instead of backend-originated messages. Fixed
+  in PR #3 via direct HTTP call (register) and codified CredentialsSignin
+  subclass with stable error codes (login). Closed.
+
 
 
 \## What's clean (audit-confirmed, no action needed)

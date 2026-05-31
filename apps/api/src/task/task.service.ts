@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationDto, paginate } from '../common/dto/pagination.dto';
@@ -156,6 +156,17 @@ export class TaskService {
         include: { column: { select: { board: { select: { workspaceId: true } } } } },
       });
       if (!task) throw new NotFoundException('Task not found');
+
+      // Fix: C1.1 — the target column must belong to the same workspace as the
+      // task, otherwise a task could be moved onto another workspace's board.
+      const targetColumn = await tx.column.findUnique({
+        where: { id: columnId },
+        select: { board: { select: { workspaceId: true } } },
+      });
+      if (!targetColumn) throw new NotFoundException('Column not found');
+      if (targetColumn.board.workspaceId !== task.column.board.workspaceId) {
+        throw new ForbiddenException('Cannot move task to a different workspace');
+      }
 
       // Shift tasks in target column to make room
       await tx.task.updateMany({
