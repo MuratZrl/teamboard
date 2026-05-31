@@ -32,7 +32,7 @@ interface Attachment {
 }
 
 export function TaskModal({ task, workspaceId, onClose, onUpdate, onDelete }: TaskModalProps) {
-  const { fetcher } = useApi();
+  const { fetcher, token } = useApi();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +91,11 @@ export function TaskModal({ task, workspaceId, onClose, onUpdate, onDelete }: Ta
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
       const res = await fetch(`${API_URL}/tasks/${task.id}/attachments`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${(window as any).__session_token}` },
+        // Auth token comes from the NextAuth session via useApi (same source as
+        // every working API call). The old window.__session_token was never set,
+        // so this sent "Bearer undefined" and got a 401. No Content-Type here on
+        // purpose — the browser sets the multipart/form-data boundary for FormData.
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
       if (!res.ok) throw new Error('Upload failed');
