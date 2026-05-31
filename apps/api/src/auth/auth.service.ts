@@ -9,18 +9,25 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { Resend } from 'resend';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { escapeHtml } from '../common/utils/html';
 
 @Injectable()
 export class AuthService {
+  private resend: Resend | null;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
-  ) {}
+  ) {
+    const apiKey = this.config.get<string>('RESEND_API_KEY');
+    this.resend = apiKey ? new Resend(apiKey) : null;
+  }
 
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
@@ -204,8 +211,30 @@ export class AuthService {
     const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:3000');
     const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
 
-    // TODO: Send email via Resend when configured
-    console.log(`[DEV] Password reset link for ${email}: ${resetLink}`);
+    if (this.resend) {
+      // Fix: H2 — escape user-controlled values before HTML interpolation.
+      // Subject is a plain-text mail header, not HTML, so it stays unescaped.
+      const safeResetLink = escapeHtml(resetLink);
+      try {
+        await this.resend.emails.send({
+          from: 'TeamBoard <noreply@teamboard.dev>',
+          to: email,
+          subject: 'Reset your TeamBoard password',
+          html: `
+            <h2>Reset your password</h2>
+            <p>We received a request to reset your TeamBoard password.</p>
+            <p><a href="${safeResetLink}" style="background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;">Reset Password</a></p>
+            <p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>
+          `,
+        });
+      } catch (error) {
+        // Swallow send failures so the response stays uniform whether or not the
+        // account exists and whether or not the email sent (anti-enumeration).
+        console.error(`[auth] Failed to send password reset email: ${error}`);
+      }
+    } else {
+      console.log(`[DEV] Password reset link for ${email}: ${resetLink}`);
+    }
 
     return { message: 'If an account exists, a reset link has been sent.' };
   }

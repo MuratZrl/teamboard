@@ -45,9 +45,24 @@ export class InvitationService {
       );
     }
 
-    const existingMember = await this.prisma.workspaceMember.findUnique({
-      where: { userId_workspaceId: { userId: email, workspaceId } },
+    // Fix: resolve the invited email to a user first, then check membership by
+    // that user's id (the old query passed the email string as userId, so it
+    // never matched). email is @unique on User and WorkspaceMember has a
+    // @@unique([userId, workspaceId]) composite key.
+    const invitedUser = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
     });
+    if (invitedUser) {
+      const existingMember = await this.prisma.workspaceMember.findUnique({
+        where: { userId_workspaceId: { userId: invitedUser.id, workspaceId } },
+      });
+      if (existingMember) {
+        throw new BadRequestException(
+          'User is already a member of this workspace',
+        );
+      }
+    }
 
     const alreadyInvited = await this.prisma.invitation.findFirst({
       where: { email, workspaceId, status: 'PENDING' },

@@ -91,7 +91,7 @@ teamboard/
 ### Authentication
 - Email/password registration with confirmation
 - Google OAuth login
-- Password reset flow (forgot → email token → reset)
+- Password reset flow (forgot → email token → reset, sent via Resend; reset link is logged server-side in dev when no API key is set)
 - JWT-based session management
 
 ### Multi-tenant Workspaces
@@ -128,11 +128,11 @@ teamboard/
 - Landing page: hero, features, pricing, testimonials
 
 ### Production-Ready
-- Rate limiting (60 req/min global, 5 req/min auth)
+- Rate limiting (60 req/min global; auth routes vary: register/login/reset-password 5/min, forgot-password 3/min, Google/demo-login 10/min)
 - Pagination + search on all list endpoints
 - Sentry error tracking (optional, via env var)
 - Global exception filter with structured error responses
-- Playwright E2E test suite (12 passing)
+- Playwright E2E test suite (12 tests; currently failing in CI)
 - GitHub Actions CI/CD (lint, build, typecheck, e2e)
 
 ## Local Setup
@@ -233,6 +233,7 @@ pnpm --filter @teamboard/web test:e2e
 | GET | `/api/auth/me` | Current user | JWT |
 | POST | `/api/auth/forgot-password` | Request reset | No |
 | POST | `/api/auth/reset-password` | Reset password | No |
+| POST | `/api/auth/demo-login` | Demo account login (disabled in production) | No |
 
 ### Workspaces
 | Method | Endpoint | Description | Auth |
@@ -296,7 +297,7 @@ pnpm --filter @teamboard/web test:e2e
 ### Subscription
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/api/workspaces/:id/checkout` | Stripe checkout | JWT + Member |
+| POST | `/api/workspaces/:id/checkout` | Stripe checkout | JWT + Owner |
 | GET | `/api/workspaces/:id/subscription` | Get subscription | JWT + Member |
 | POST | `/api/webhooks/stripe` | Stripe webhook | Signature |
 

@@ -75,9 +75,9 @@ export class TaskController {
   }
 
   // Fix: C1 — workspace membership check via TaskWorkspaceGuard.
-  // Note: this only verifies the source task's workspace. The target columnId
-  // in the body is validated separately in task.service (cross-workspace move
-  // protection — tracked as a follow-up, see summary).
+  // Note: this verifies the source task's workspace. The target columnId in the
+  // body is validated in task.service.move(), which confirms the target column's
+  // board belongs to the same workspace (cross-workspace move protection).
   @Patch('tasks/:id/move')
   @UseGuards(TaskWorkspaceGuard)
   move(
