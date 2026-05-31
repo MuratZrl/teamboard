@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { DemoLoginButton } from '@/components/demo-login-button';
+import { auth } from '@/lib/auth';
 
 const features = [
   {
@@ -44,7 +45,11 @@ const highlights = [
   { value: 'Real-time', label: 'Live collaboration' },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await auth();
+  const isAuthenticated = !!session?.user;
+  const displayName = session?.user?.name || session?.user?.email;
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b1120] overflow-x-hidden">
       {/* Nav */}
@@ -58,18 +63,34 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Get Started Free
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="hidden sm:inline text-sm text-slate-600 dark:text-slate-300 font-medium">
+                  {displayName}
+                </span>
+                <Link
+                  href="/workspaces"
+                  className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Open dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/register"
+                  className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Get Started Free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

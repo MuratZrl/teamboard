@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from './prisma/prisma.module';
+import { R2Module } from './r2/r2.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspaceModule } from './workspace/workspace.module';
 import { InvitationModule } from './invitation/invitation.module';
@@ -34,6 +35,7 @@ import { BoardTemplateModule } from './board-template/board-template.module';
     }),
     EventEmitterModule.forRoot(),
     PrismaModule,
+    R2Module,
     AuthModule,
     WorkspaceModule,
     InvitationModule,

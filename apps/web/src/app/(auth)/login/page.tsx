@@ -42,6 +42,7 @@ function LoginForm() {
       return;
     }
     router.push(callbackUrl);
+    router.refresh();
   }
 
   return (

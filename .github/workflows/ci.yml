@@ -79,6 +79,14 @@ jobs:
       NEXTAUTH_SECRET: ci-test-nextauth-secret
       NEXTAUTH_URL: http://localhost:3000
       PORT: 4000
+      # Dummy R2 credentials so R2Service.getOrThrow doesn't crash the API at
+      # boot. No E2E test uploads to R2, so these values are never exercised —
+      # they only need to be present.
+      R2_ACCOUNT_ID: test-account-id
+      R2_ENDPOINT: https://test.r2.cloudflarestorage.com
+      R2_ACCESS_KEY_ID: test-access-key
+      R2_SECRET_ACCESS_KEY: test-secret-key
+      R2_BUCKET_NAME: test-bucket
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

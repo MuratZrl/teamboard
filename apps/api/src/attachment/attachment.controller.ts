@@ -1,6 +1,6 @@
 import {
   BadRequestException,
-  Controller, Post, Get, Delete, Param, UseGuards, Req, Res,
+  Controller, Post, Get, Delete, Param, UseGuards, Req,
   UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -10,20 +10,13 @@ import {
   AttachmentWorkspaceGuard,
   TaskIdWorkspaceGuard,
 } from '../common/guards/resource.guard';
-import { Request, Response } from 'express';
-import { diskStorage } from 'multer';
-import { randomUUID } from 'crypto';
+import { Request } from 'express';
+import { memoryStorage } from 'multer';
 import * as path from 'path';
-import * as fs from 'fs';
 
-const tmpDir = path.join(process.cwd(), 'uploads', 'tmp');
-fs.mkdirSync(tmpDir, { recursive: true });
-
-// Fix: H3 — explicit MIME + extension whitelist. Both must match for the upload
-// to be accepted. Header-MIME alone is spoofable by the client; extension alone
-// is what attackers actually use to lure. Magic-number sniffing is a stronger
-// defense and is tracked as a follow-up (would require declaring `file-type`
-// as a direct dependency).
+// Fix: H3 — explicit MIME + extension whitelist (restored; the R2 migration
+// dropped it). Both must match for an upload to be accepted. Header-MIME alone
+// is spoofable by the client; extension alone is what attackers use to lure.
 const ALLOWED_TYPES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['image/png', new Set(['.png'])],
   ['image/jpeg', new Set(['.jpg', '.jpeg'])],
@@ -58,12 +51,11 @@ export class AttachmentController {
   @UseGuards(TaskIdWorkspaceGuard)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: tmpDir,
-        // Fix: H3 — temp filename is also UUID-based so the attacker's
-        // originalname never touches disk, even transiently.
-        filename: (_req, _file, cb) => cb(null, randomUUID()),
-      }),
+      storage: memoryStorage(),
+      // Fix: enforce the 10MB cap at the stream level so multer aborts before
+      // buffering an oversized body into memory; the MaxFileSizeValidator below
+      // remains as an explicit backstop.
+      limits: { fileSize: 10 * 1024 * 1024 },
     }),
   )
   upload(
@@ -77,9 +69,10 @@ export class AttachmentController {
     @Req() req: Request,
   ) {
     const user = req.user as { id: string };
-    // Fix: H3 — validate MIME+extension whitelist before persisting.
-    const ext = validatedExtension(file);
-    return this.attachmentService.upload(taskId, user.id, file, ext);
+    // Fix: H3 — reject disallowed MIME/extension combinations with a 400 before
+    // anything is uploaded to R2 or persisted.
+    validatedExtension(file);
+    return this.attachmentService.upload(taskId, user.id, file);
   }
 
   // Fix: C1 — workspace membership check via TaskIdWorkspaceGuard (param :taskId)
@@ -90,17 +83,10 @@ export class AttachmentController {
   }
 
   // Fix: C1 — workspace membership check via AttachmentWorkspaceGuard
-  @Get('attachments/:id/download')
+  @Get('attachments/:id/url')
   @UseGuards(AttachmentWorkspaceGuard)
-  async download(@Param('id') id: string, @Res() res: Response) {
-    const attachment = await this.attachmentService.getFile(id);
-    // Fix: H3 — force download disposition + neutral content type + nosniff
-    // so a maliciously-named file (in case future relaxation of the MIME
-    // whitelist or a stored legacy attachment) cannot be rendered inline by
-    // the browser. res.download() sets Content-Disposition: attachment for us.
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.download(attachment.path, attachment.filename);
+  getUrl(@Param('id') id: string) {
+    return this.attachmentService.getPresignedUrl(id);
   }
 
   // Fix: C1 — workspace membership check via AttachmentWorkspaceGuard.

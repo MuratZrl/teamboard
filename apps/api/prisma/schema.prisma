@@ -146,7 +146,7 @@ model Label {
 model Attachment {
   id        String   @id @default(uuid())
   filename  String
-  path      String
+  key       String
   size      Int
   mimeType  String
   createdAt DateTime @default(now())
