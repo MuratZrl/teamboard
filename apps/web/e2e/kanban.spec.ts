@@ -30,10 +30,12 @@ test.describe.serial('Kanban Board', () => {
     await page.getByText(`${TEST_USER.name}'s Workspace`).first().click({ timeout: 10000 });
     await expect(page).toHaveURL(/\/workspaces\//, { timeout: 10000 });
 
-    // Create board
+    // Create board — the "New Board" button opens a two-step template modal:
+    // first pick "Blank Board" (gives the default columns), then name + submit.
     await page.getByText('New Board').click();
+    await page.getByText('Blank Board').click();
     await page.fill('input[placeholder="Board name"]', 'Kanban Test');
-    await page.getByRole('button', { name: 'Create', exact: true }).click();
+    await page.getByRole('button', { name: 'Create Board' }).click();
     await expect(page).toHaveURL(/\/boards\//, { timeout: 10000 });
 
     // Verify default columns
@@ -51,10 +53,12 @@ test.describe.serial('Kanban Board', () => {
     await page.getByText('Kanban Test').click({ timeout: 10000 });
     await expect(page).toHaveURL(/\/boards\//, { timeout: 10000 });
 
-    // Click + button on Todo column
+    // Click + button on Todo column. The column header has two icon buttons —
+    // the column menu (•••) first, then the add-task (+) button — so target the
+    // last one to open the inline "add task" input.
     const todoHeader = page.locator('h3', { hasText: 'Todo' });
     const todoColumn = todoHeader.locator('..').locator('..');
-    await todoColumn.locator('button').first().click();
+    await todoColumn.locator('button').last().click();
 
     // Fill and add task
     await page.fill('input[placeholder="Task title..."]', 'My first task');

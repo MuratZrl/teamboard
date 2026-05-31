@@ -46,9 +46,12 @@ test.describe('Workspace Management', () => {
     await page.getByText(`${TEST_USER.name}'s Workspace`).first().click({ timeout: 10000 });
     await expect(page).toHaveURL(/\/workspaces\//, { timeout: 10000 });
 
+    // Create board — the "New Board" button opens a two-step template modal:
+    // first pick "Blank Board", then name + submit.
     await page.getByText('New Board').click();
+    await page.getByText('Blank Board').click();
     await page.fill('input[placeholder="Board name"]', 'My Test Board');
-    await page.getByRole('button', { name: 'Create', exact: true }).click();
+    await page.getByRole('button', { name: 'Create Board' }).click();
     await expect(page).toHaveURL(/\/boards\//, { timeout: 10000 });
     await expect(page.getByText('My Test Board')).toBeVisible();
   });
