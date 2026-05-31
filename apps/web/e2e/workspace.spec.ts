@@ -14,12 +14,22 @@ async function registerAndLogin(page: any) {
     data: { name: TEST_USER.name, email: TEST_USER.email, password: TEST_USER.password },
   });
 
-  // Login via UI
+  // Login via UI. The form calls NextAuth signIn('credentials'), which POSTs to
+  // /api/auth/callback/credentials; that callback drives the backend /auth/login
+  // round-trip server-side and is the slow part on cold-booted CI servers. Wait
+  // for that response to settle BEFORE asserting the redirect, so the test is
+  // gated on real auth completion rather than a blind URL poll. A genuine auth
+  // failure still surfaces: the redirect won't happen and toHaveURL will fail.
   await page.goto('/login');
   await page.fill('input[type="email"]', TEST_USER.email);
   await page.fill('input[type="password"]', TEST_USER.password);
+  const loginResponse = page.waitForResponse(
+    (res: any) => res.url().includes('/api/auth/callback/credentials'),
+    { timeout: 30000 },
+  );
   await page.click('button[type="submit"]');
-  await expect(page).toHaveURL(/\/workspaces/, { timeout: 20000 });
+  await loginResponse;
+  await expect(page).toHaveURL(/\/workspaces/, { timeout: 30000 });
 }
 
 test.describe('Workspace Management', () => {
